@@ -1,0 +1,469 @@
+﻿<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ระบบใบเสนอราคารถยนต์ออนไลน์ - Auto Quotation System</title>
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- Google Fonts: Kanit -->
+  <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  
+  <!-- Font Awesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <!-- html2canvas for Export PNG -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Kanit', 'sans-serif'],
+          },
+          colors: {
+            brand: {
+              dark: '#0f172a',
+              navy: '#1e293b',
+              accent: '#2563eb',
+              gold: '#d97706',
+              light: '#f8fafc'
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    body {
+      font-family: 'Kanit', sans-serif;
+      background-color: #f1f5f9;
+    }
+    #quotation-preview {
+      width: 100%;
+      max-width: 800px;
+      margin: 0 auto;
+      background: #ffffff;
+    }
+  </style>
+</head>
+<body class="text-slate-800 min-h-screen pb-12">
+
+  <!-- Header Bar -->
+  <header class="bg-brand-dark text-white py-4 px-6 shadow-md mb-8 border-b-4 border-brand-accent">
+    <div class="max-w-7xl mx-auto flex justify-between items-center">
+      <div class="flex items-center space-x-3">
+        <i class="fa-solid fa-car-side text-brand-accent text-3xl"></i>
+        <div>
+          <h1 class="text-xl font-bold tracking-wide">AUTO QUOTATION SYSTEM</h1>
+          <p class="text-xs text-slate-400">ระบบสร้างใบเสนอราคารถยนต์และคำนวณไฟแนนซ์แบบมืออาชีพ</p>
+        </div>
+      </div>
+      <button onclick="exportToPNG()" id="export-btn" class="bg-emerald-600 hover:bg-emerald-700 text-white font-medium px-5 py-2.5 rounded-lg shadow-lg flex items-center space-x-2 transition duration-200 cursor-pointer">
+        <i class="fa-solid fa-file-image text-lg"></i>
+        <span>บันทึกเป็นภาพ PNG</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- Main Container -->
+  <main class="max-w-7xl mx-auto px-4 grid grid-cols-1 lg:grid-cols-12 gap-8">
+    
+    <!-- LEFT COLUMN: INPUT FORM (5 Cols) -->
+    <section class="lg:col-span-5 bg-white p-6 rounded-2xl shadow-sm border border-slate-200 h-fit space-y-6">
+      
+      <!-- Section 1: Document & Sales Info -->
+      <div>
+        <h2 class="text-lg font-bold text-brand-navy mb-3 flex items-center border-b pb-2">
+          <i class="fa-solid fa-file-invoice text-brand-accent mr-2"></i> ข้อมูลเอกสารและผู้ขาย
+        </h2>
+        <div class="grid grid-cols-1 gap-3">
+          <div class="grid grid-cols-2 gap-2">
+            <div>
+              <label class="block text-xs font-semibold text-slate-600 mb-1">เลขที่ใบเสนอราคา</label>
+              <input type="text" id="quoteNo" value="QT-20260701" class="w-full text-sm border border-slate-300 rounded-lg p-2.5 focus:ring-2 focus:ring-brand-accent focus:outline-none font-semibold text-brand-accent" oninput="updateQuotation()">
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-600 mb-1">วันที่ออกเอกสาร</label>
+              <input type="text" id="quoteDate" value="" class="w-full text-sm border border-slate-300 rounded-lg p-2.5 focus:ring-2 focus:ring-brand-accent focus:outline-none" oninput="updateQuotation()">
+            </div>
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 mb-1">ชื่อเซลส์ / ที่ปรึกษาการขาย</label>
+            <input type="text" id="salesName" value="สมชาย ใจดี (ที่ปรึกษาการขาย)" class="w-full text-sm border border-slate-300 rounded-lg p-2.5 focus:ring-2 focus:ring-brand-accent focus:outline-none" oninput="updateQuotation()">
+          </div>
+          <div class="grid grid-cols-2 gap-2">
+            <div>
+              <label class="block text-xs font-semibold text-slate-600 mb-1">ชื่อลูกค้า</label>
+              <input type="text" id="custName" value="คุณวิชัย วงศ์สว่าง" class="w-full text-sm border border-slate-300 rounded-lg p-2.5 focus:ring-2 focus:ring-brand-accent focus:outline-none" oninput="updateQuotation()">
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-600 mb-1">เบอร์โทรศัพท์ลูกค้า</label>
+              <input type="text" id="custPhone" value="081-234-5678" class="w-full text-sm border border-slate-300 rounded-lg p-2.5 focus:ring-2 focus:ring-brand-accent focus:outline-none" oninput="updateQuotation()">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Section 2: Car Info -->
+      <div>
+        <h2 class="text-lg font-bold text-brand-navy mb-3 flex items-center border-b pb-2">
+          <i class="fa-solid fa-car text-brand-accent mr-2"></i> ข้อมูลรถยนต์
+        </h2>
+        <div class="space-y-3">
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 mb-1">ยี่ห้อ / รุ่นรถยนต์</label>
+            <input type="text" id="carBrandModel" value="All-New SUV Premium" class="w-full text-sm border border-slate-300 rounded-lg p-2.5 focus:ring-2 focus:ring-brand-accent focus:outline-none" oninput="updateQuotation()">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 mb-1">รุ่นย่อย (Grade / Trim)</label>
+            <input type="text" id="carGrade" value="2.0 HEV RS E-CVT" class="w-full text-sm border border-slate-300 rounded-lg p-2.5 focus:ring-2 focus:ring-brand-accent focus:outline-none" oninput="updateQuotation()">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 mb-1">ราคารถยนต์ (บาท)</label>
+            <input type="number" id="carPrice" value="1399000" class="w-full text-sm border border-slate-300 rounded-lg p-2.5 focus:ring-2 focus:ring-brand-accent focus:outline-none font-semibold text-brand-accent" oninput="calculateFinance()">
+          </div>
+        </div>
+      </div>
+
+      <!-- Section 3: Finance Terms -->
+      <div>
+        <h2 class="text-lg font-bold text-brand-navy mb-3 flex items-center border-b pb-2">
+          <i class="fa-solid fa-calculator text-brand-accent mr-2"></i> เงื่อนไขไฟแนนซ์
+        </h2>
+        <div class="space-y-3">
+          
+          <!-- Down Payment Toggle & Input -->
+          <div>
+            <div class="flex justify-between items-center mb-1">
+              <label class="text-xs font-semibold text-slate-600">เงินดาวน์</label>
+              <div class="inline-flex rounded-md shadow-sm text-xs" role="group">
+                <button type="button" id="downTypePercent" onclick="setDownType('percent')" class="px-2 py-1 bg-brand-accent text-white rounded-l-md font-medium">เปอร์เซ็นต์ (%)</button>
+                <button type="button" id="downTypeBaht" onclick="setDownType('baht')" class="px-2 py-1 bg-slate-200 text-slate-700 rounded-r-md font-medium">จำนวนเงิน (บาท)</button>
+              </div>
+            </div>
+            <div class="relative">
+              <input type="number" id="downVal" value="25" class="w-full text-sm border border-slate-300 rounded-lg p-2.5 focus:ring-2 focus:ring-brand-accent focus:outline-none" oninput="calculateFinance()">
+              <span id="downUnit" class="absolute right-3 top-2.5 text-xs text-slate-400 font-semibold">%</span>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-2 gap-2">
+            <div>
+              <label class="block text-xs font-semibold text-slate-600 mb-1">ดอกเบี้ยต่อปี (%)</label>
+              <input type="number" step="0.01" id="interestRate" value="2.39" class="w-full text-sm border border-slate-300 rounded-lg p-2.5 focus:ring-2 focus:ring-brand-accent focus:outline-none" oninput="calculateFinance()">
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-600 mb-1">ระยะเวลาผ่อน (งวด)</label>
+              <select id="installmentMonths" class="w-full text-sm border border-slate-300 rounded-lg p-2.5 focus:ring-2 focus:ring-brand-accent focus:outline-none bg-white" onchange="calculateFinance()">
+                <option value="48">48 งวด (4 ปี)</option>
+                <option value="60">60 งวด (5 ปี)</option>
+                <option value="72" selected>72 งวด (6 ปี)</option>
+                <option value="84">84 งวด (7 ปี)</option>
+              </select>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Section 4: Accessories & Discounts -->
+      <div>
+        <div class="flex justify-between items-center mb-2 border-b pb-2">
+          <h2 class="text-lg font-bold text-brand-navy flex items-center">
+            <i class="fa-solid fa-gift text-brand-accent mr-2"></i> ของแถม / ส่วนลด / ประกันภัย
+          </h2>
+          <button onclick="addFreebieRow()" class="text-xs bg-slate-100 hover:bg-slate-200 text-brand-accent font-semibold px-2.5 py-1 rounded-md transition cursor-pointer">
+            + เพิ่มรายการ
+          </button>
+        </div>
+        
+        <div id="freebieList" class="space-y-2 max-h-48 overflow-y-auto pr-1">
+          <!-- Dynamic Items Added Here -->
+        </div>
+      </div>
+
+    </section>
+
+    <!-- RIGHT COLUMN: QUOTATION PREVIEW CARD (7 Cols) -->
+    <section class="lg:col-span-7">
+      
+      <!-- Card Container (The area html2canvas captures) -->
+      <div id="quotation-preview" class="p-8 rounded-2xl shadow-xl border border-slate-200 relative text-slate-800">
+        
+        <!-- Header / Branding -->
+        <div class="flex justify-between items-start border-b-2 border-slate-800 pb-6 mb-6">
+          <div>
+            <div class="flex items-center space-x-2 text-brand-dark mb-1">
+              <i class="fa-solid fa-car-burst text-3xl text-brand-accent"></i>
+              <span class="text-2xl font-black tracking-wider uppercase">PREMIUM AUTO SALES</span>
+            </div>
+            <p class="text-xs text-slate-500">โชว์รูมและศูนย์บริการรถยนต์มาตรฐานครบวงจร</p>
+          </div>
+          <div class="text-right">
+            <span class="inline-block bg-brand-navy text-white text-xs font-semibold px-3 py-1 rounded-full mb-2">OFFICIAL QUOTATION</span>
+            <p class="text-xs text-slate-500">เลขที่ใบเสนอราคา: <span id="outQuoteNo" class="font-bold text-brand-accent">QT-20260701</span></p>
+            <p class="text-xs text-slate-500">วันที่: <span id="outDate" class="font-semibold text-slate-700">--/--/----</span></p>
+          </div>
+        </div>
+
+        <!-- Customer & Sales Info Banner -->
+        <div class="grid grid-cols-2 gap-4 bg-slate-50 p-4 rounded-xl mb-6 border border-slate-100">
+          <div>
+            <p class="text-xs text-slate-400 font-medium uppercase tracking-wider mb-1">เรียน คุณลูกค้า</p>
+            <p id="outCustName" class="text-base font-bold text-brand-navy">คุณวิชัย วงศ์สว่าง</p>
+            <p class="text-xs text-slate-600 mt-0.5"><i class="fa-solid fa-phone text-slate-400 mr-1"></i> <span id="outCustPhone">081-234-5678</span></p>
+          </div>
+          <div class="text-right border-l border-slate-200 pl-4">
+            <p class="text-xs text-slate-400 font-medium uppercase tracking-wider mb-1">ที่ปรึกษาการขายดูแลท่าน</p>
+            <p id="outSalesName" class="text-sm font-semibold text-slate-800">สมชาย ใจดี</p>
+            <p class="text-xs text-slate-500 mt-0.5">ยินดีให้บริการและต้อนรับอย่างยิ่งค่ะ</p>
+          </div>
+        </div>
+
+        <!-- Car Specification -->
+        <div class="mb-6">
+          <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">รายละเอียดรถยนต์ที่เสนอราคา</h3>
+          <div class="bg-brand-navy text-white p-4 rounded-xl flex justify-between items-center shadow-md">
+            <div>
+              <h4 id="outCarModel" class="text-xl font-bold text-white">All-New SUV Premium</h4>
+              <p id="outCarGrade" class="text-xs text-slate-300 mt-0.5">รุ่นย่อย: 2.0 HEV RS E-CVT</p>
+            </div>
+            <div class="text-right">
+              <p class="text-xs text-slate-300">ราคาสุทธิ (รวม VAT)</p>
+              <p id="outCarPrice" class="text-2xl font-black text-amber-400">1,399,000 ฿</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Financial Breakdown -->
+        <div class="mb-6">
+          <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">สรุปเงื่อนไขการดาวน์และผ่อนชำระ</h3>
+          <div class="grid grid-cols-3 gap-3 mb-3">
+            <div class="bg-slate-50 p-3 rounded-xl border border-slate-200 text-center">
+              <span class="text-xs text-slate-500 block mb-1">เงินดาวน์ (<span id="outDownPercent">25%</span>)</span>
+              <span id="outDownBaht" class="text-base font-bold text-slate-800">349,750 ฿</span>
+            </div>
+            <div class="bg-slate-50 p-3 rounded-xl border border-slate-200 text-center">
+              <span class="text-xs text-slate-500 block mb-1">ยอดจัดไฟแนนซ์</span>
+              <span id="outFinanceAmount" class="text-base font-bold text-slate-800">1,049,250 ฿</span>
+            </div>
+            <div class="bg-slate-50 p-3 rounded-xl border border-slate-200 text-center">
+              <span class="text-xs text-slate-500 block mb-1">อัตราดอกเบี้ย / ระยะเวลา</span>
+              <span id="outInterestRate" class="text-base font-bold text-slate-800">2.39% / 72 งวด</span>
+            </div>
+          </div>
+
+          <!-- Monthly Payment Highlight Box -->
+          <div class="bg-gradient-to-r from-blue-900 to-brand-navy text-white p-5 rounded-xl text-center shadow-md relative overflow-hidden border border-blue-700">
+            <div class="absolute -right-6 -bottom-6 opacity-10">
+              <i class="fa-solid fa-calculator text-9xl text-white"></i>
+            </div>
+            <p class="text-xs text-blue-200 uppercase tracking-widest font-medium mb-1">ค่างวดผ่อนชำระประมาณการเพียง</p>
+            <div class="text-4xl font-black text-amber-400 my-1 tracking-tight" id="outMonthlyPayment">
+              0 <span class="text-xl text-white font-normal">บาท / เดือน</span>
+            </div>
+            <p class="text-[11px] text-blue-200">* คำนวณค่างวดเบื้องต้น รวมดอกเบี้ยตลอดสัญญาเรียบร้อยแล้ว</p>
+          </div>
+        </div>
+
+        <!-- Freebies & Special Offers -->
+        <div class="mb-6">
+          <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">รายการของแถม / ข้อเสนอพิเศษ</h3>
+          <div class="bg-slate-50 p-4 rounded-xl border border-slate-200">
+            <ul id="outFreebieList" class="grid grid-cols-2 gap-x-4 gap-y-2 text-xs text-slate-700">
+              <!-- Rendered Dynamically -->
+            </ul>
+          </div>
+        </div>
+
+        <!-- Terms & Signatures -->
+        <div class="mt-8 pt-4 border-t border-slate-200 text-[11px] text-slate-400 flex justify-between items-end">
+          <div class="max-w-xs space-y-1">
+            <p>* เงื่อนไขการอนุมัติสินเชื่อเป็นไปตามที่สถาบันการเงินกำหนด</p>
+            <p>* ใบเสนอราคานี้มีผลบังคับใช้ 15 วัน นับจากวันที่ออกเอกสาร</p>
+          </div>
+          <div class="text-center w-40">
+            <div class="border-b border-slate-300 mb-1 pb-6"></div>
+            <p class="text-xs text-slate-600 font-medium">ลายเซ็นที่ปรึกษาการขาย</p>
+          </div>
+        </div>
+
+      </div>
+
+    </section>
+
+  </main>
+
+  <script>
+    let downType = 'percent';
+    let freebies = [
+      "ประกันภัยชั้น 1 พร้อม พ.ร.บ. (1 ปี)",
+      "ฟิล์มกรองแสงรอบคัน + หน้าเต็ม",
+      "ส่วนลดเงินสดพิเศษ 20,000 บาท",
+      "ชุดพรมปูพื้นเข้ารูป VIP",
+      "กรอบป้ายทะเบียน + พวงกุญแจพรีเมียม",
+      "บริการช่วยเหลือฉุกเฉิน 24 ชม. (3 ปี)"
+    ];
+
+    document.addEventListener('DOMContentLoaded', () => {
+      // Set default today's date in Thai format
+      const today = new Date();
+      const dateStr = today.toLocaleDateString('th-TH', { day: '2-digit', month: '2-digit', year: 'numeric' });
+      document.getElementById('quoteDate').value = dateStr;
+
+      renderFreebieInputs();
+      calculateFinance();
+    });
+
+    function setDownType(type) {
+      downType = type;
+      const btnPercent = document.getElementById('downTypePercent');
+      const btnBaht = document.getElementById('downTypeBaht');
+      const unit = document.getElementById('downUnit');
+      const input = document.getElementById('downVal');
+
+      if (type === 'percent') {
+        btnPercent.className = 'px-2 py-1 bg-brand-accent text-white rounded-l-md font-medium';
+        btnBaht.className = 'px-2 py-1 bg-slate-200 text-slate-700 rounded-r-md font-medium';
+        unit.innerText = '%';
+        input.value = 25;
+      } else {
+        btnBaht.className = 'px-2 py-1 bg-brand-accent text-white rounded-r-md font-medium';
+        btnPercent.className = 'px-2 py-1 bg-slate-200 text-slate-700 rounded-l-md font-medium';
+        unit.innerText = 'บาท';
+        const price = parseFloat(document.getElementById('carPrice').value) || 0;
+        input.value = Math.round(price * 0.25);
+      }
+      calculateFinance();
+    }
+
+    function renderFreebieInputs() {
+      const container = document.getElementById('freebieList');
+      container.innerHTML = '';
+      freebies.forEach((item, index) => {
+        const div = document.createElement('div');
+        div.className = 'flex items-center space-x-2';
+        div.innerHTML = `
+          <input type="text" value="${item}" oninput="updateFreebie(${index}, this.value)" class="flex-1 text-xs border border-slate-300 rounded p-2 focus:ring-1 focus:ring-brand-accent focus:outline-none">
+          <button onclick="removeFreebieRow(${index})" class="text-rose-500 hover:text-rose-700 p-1 cursor-pointer"><i class="fa-solid fa-trash-can"></i></button>
+        `;
+        container.appendChild(div);
+      });
+      updateFreebiePreview();
+    }
+
+    function addFreebieRow() {
+      freebies.push("รายการของแถมใหม่");
+      renderFreebieInputs();
+    }
+
+    function removeFreebieRow(index) {
+      freebies.splice(index, 1);
+      renderFreebieInputs();
+    }
+
+    function updateFreebie(index, value) {
+      freebies[index] = value;
+      updateFreebiePreview();
+    }
+
+    function updateFreebiePreview() {
+      const outList = document.getElementById('outFreebieList');
+      outList.innerHTML = '';
+      freebies.forEach(item => {
+        if(item.trim() !== "") {
+          const li = document.createElement('li');
+          li.className = 'flex items-center space-x-1.5';
+          li.innerHTML = `<i class="fa-solid fa-circle-check text-emerald-500 text-[10px]"></i> <span>${item}</span>`;
+          outList.appendChild(li);
+        }
+      });
+    }
+
+    // Real-time Text Updates (Including Quote No & Date)
+    function updateQuotation() {
+      document.getElementById('outQuoteNo').innerText = document.getElementById('quoteNo').value || '-';
+      document.getElementById('outDate').innerText = document.getElementById('quoteDate').value || '-';
+      document.getElementById('outSalesName').innerText = document.getElementById('salesName').value || '-';
+      document.getElementById('outCustName').innerText = document.getElementById('custName').value || '-';
+      document.getElementById('outCustPhone').innerText = document.getElementById('custPhone').value || '-';
+      document.getElementById('outCarModel').innerText = document.getElementById('carBrandModel').value || '-';
+      document.getElementById('outCarGrade').innerText = 'รุ่นย่อย: ' + (document.getElementById('carGrade').value || '-');
+    }
+
+    // Core Financial Calculations
+    function calculateFinance() {
+      updateQuotation();
+
+      const carPrice = parseFloat(document.getElementById('carPrice').value) || 0;
+      const downVal = parseFloat(document.getElementById('downVal').value) || 0;
+      const interestRate = parseFloat(document.getElementById('interestRate').value) || 0;
+      const months = parseInt(document.getElementById('installmentMonths').value) || 72;
+
+      let downBaht = 0;
+      let downPercent = 0;
+
+      if (downType === 'percent') {
+        downPercent = downVal;
+        downBaht = carPrice * (downPercent / 100);
+      } else {
+        downBaht = downVal;
+        downPercent = carPrice > 0 ? (downBaht / carPrice) * 100 : 0;
+      }
+
+      const financeAmount = carPrice - downBaht;
+      const years = months / 12;
+      const totalInterest = financeAmount * (interestRate / 100) * years;
+      const totalPayable = financeAmount + totalInterest;
+      const monthlyPayment = months > 0 ? totalPayable / months : 0;
+
+      // Update Preview UI
+      document.getElementById('outCarPrice').innerText = carPrice.toLocaleString('th-TH') + ' ฿';
+      document.getElementById('outDownPercent').innerText = downPercent.toFixed(1) + '%';
+      document.getElementById('outDownBaht').innerText = Math.round(downBaht).toLocaleString('th-TH') + ' ฿';
+      document.getElementById('outFinanceAmount').innerText = Math.round(financeAmount).toLocaleString('th-TH') + ' ฿';
+      document.getElementById('outInterestRate').innerText = `${interestRate}% / ${months} งวด`;
+      
+      document.getElementById('outMonthlyPayment').innerHTML = `${Math.round(monthlyPayment).toLocaleString('th-TH')} <span class="text-xl text-white font-normal">บาท / เดือน</span>`;
+    }
+
+    // Export Quotation to PNG using html2canvas
+    function exportToPNG() {
+      const targetElement = document.getElementById('quotation-preview');
+      const btn = document.getElementById('export-btn');
+
+      const originalContent = btn.innerHTML;
+      btn.innerHTML = `<i class="fa-solid fa-spinner animate-spin text-lg"></i> <span>กำลังสร้างภาพ...</span>`;
+      btn.disabled = true;
+
+      html2canvas(targetElement, {
+        scale: 2,
+        useCORS: true,
+        backgroundColor: '#ffffff',
+        logging: false
+      }).then(canvas => {
+        const link = document.createElement('a');
+        const quoteNo = document.getElementById('quoteNo').value || 'Quotation';
+        const custName = document.getElementById('custName').value || 'Customer';
+        link.download = `ใบเสนอราคา_${quoteNo}_${custName}.png`;
+        link.href = canvas.toDataURL('image/png', 1.0);
+        link.click();
+
+        btn.innerHTML = originalContent;
+        btn.disabled = false;
+      }).catch(err => {
+        console.error('Export PNG failed:', err);
+        alert('เกิดข้อผิดพลาดในการบันทึกไฟล์ภาพ กรุณาลองใหม่อีกครั้ง');
+        btn.innerHTML = originalContent;
+        btn.disabled = false;
+      });
+    }
+  </script>
+
+</body>
+</html>
