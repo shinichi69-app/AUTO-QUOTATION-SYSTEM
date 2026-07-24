@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="th">
 <head>
   <meta charset="UTF-8">
@@ -14,8 +14,8 @@
   <!-- Font Awesome Icons -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   
-  <!-- html2canvas for Export PNG -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <!-- html2pdf.js CDN (สำหรับแปลง HTML เป็น PDF) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
   <script>
     tailwind.config = {
@@ -63,9 +63,10 @@
           <p class="text-xs text-slate-400">ระบบสร้างใบเสนอราคารถยนต์และคำนวณไฟแนนซ์แบบมืออาชีพ</p>
         </div>
       </div>
-      <button onclick="exportToPNG()" id="export-btn" class="bg-emerald-600 hover:bg-emerald-700 text-white font-medium px-5 py-2.5 rounded-lg shadow-lg flex items-center space-x-2 transition duration-200 cursor-pointer">
-        <i class="fa-solid fa-file-image text-lg"></i>
-        <span>บันทึกเป็นภาพ PNG</span>
+      <!-- ปุ่มบันทึกเป็นไฟล์ PDF -->
+      <button onclick="exportToPDF()" id="export-btn" class="bg-emerald-600 hover:bg-emerald-700 text-white font-medium px-5 py-2.5 rounded-lg shadow-lg flex items-center space-x-2 transition duration-200 cursor-pointer">
+        <i class="fa-solid fa-file-pdf text-lg"></i>
+        <span>บันทึกเป็นไฟล์ PDF</span>
       </button>
     </div>
   </header>
@@ -192,8 +193,8 @@
     <!-- RIGHT COLUMN: QUOTATION PREVIEW CARD (7 Cols) -->
     <section class="lg:col-span-7">
       
-      <!-- Card Container (The area html2canvas captures) -->
-      <div id="quotation-preview" class="p-8 rounded-2xl shadow-xl border border-slate-200 relative text-slate-800">
+      <!-- Card Container (พื้นที่เฉพาะสำหรับพิมพ์ออก PDF) -->
+      <div id="quotation-preview" class="p-8 rounded-2xl shadow-xl border border-slate-200 relative text-slate-800 bg-white">
         
         <!-- Header / Branding -->
         <div class="flex justify-between items-start border-b-2 border-slate-800 pb-6 mb-6">
@@ -311,7 +312,7 @@
     ];
 
     document.addEventListener('DOMContentLoaded', () => {
-      // Set default today's date in Thai format
+      // ใส่วันที่ปัจจุบันอัตโนมัติในรูปแบบไทย
       const today = new Date();
       const dateStr = today.toLocaleDateString('th-TH', { day: '2-digit', month: '2-digit', year: 'numeric' });
       document.getElementById('quoteDate').value = dateStr;
@@ -385,7 +386,7 @@
       });
     }
 
-    // Real-time Text Updates (Including Quote No & Date)
+    // อัปเดตข้อความแบบ Real-time
     function updateQuotation() {
       document.getElementById('outQuoteNo').innerText = document.getElementById('quoteNo').value || '-';
       document.getElementById('outDate').innerText = document.getElementById('quoteDate').value || '-';
@@ -396,7 +397,7 @@
       document.getElementById('outCarGrade').innerText = 'รุ่นย่อย: ' + (document.getElementById('carGrade').value || '-');
     }
 
-    // Core Financial Calculations
+    // คำนวณยอดไฟแนนซ์และค่างวด
     function calculateFinance() {
       updateQuotation();
 
@@ -422,7 +423,7 @@
       const totalPayable = financeAmount + totalInterest;
       const monthlyPayment = months > 0 ? totalPayable / months : 0;
 
-      // Update Preview UI
+      // แสดงผลตัวเลขในโซน Preview
       document.getElementById('outCarPrice').innerText = carPrice.toLocaleString('th-TH') + ' ฿';
       document.getElementById('outDownPercent').innerText = downPercent.toFixed(1) + '%';
       document.getElementById('outDownBaht').innerText = Math.round(downBaht).toLocaleString('th-TH') + ' ฿';
@@ -432,33 +433,32 @@
       document.getElementById('outMonthlyPayment').innerHTML = `${Math.round(monthlyPayment).toLocaleString('th-TH')} <span class="text-xl text-white font-normal">บาท / เดือน</span>`;
     }
 
-    // Export Quotation to PNG using html2canvas
-    function exportToPNG() {
+    // แปลงการ์ดใบเสนอราคาเป็น PDF
+    function exportToPDF() {
       const targetElement = document.getElementById('quotation-preview');
       const btn = document.getElementById('export-btn');
 
       const originalContent = btn.innerHTML;
-      btn.innerHTML = `<i class="fa-solid fa-spinner animate-spin text-lg"></i> <span>กำลังสร้างภาพ...</span>`;
+      btn.innerHTML = `<i class="fa-solid fa-spinner animate-spin text-lg"></i> <span>กำลังสร้าง PDF...</span>`;
       btn.disabled = true;
 
-      html2canvas(targetElement, {
-        scale: 2,
-        useCORS: true,
-        backgroundColor: '#ffffff',
-        logging: false
-      }).then(canvas => {
-        const link = document.createElement('a');
-        const quoteNo = document.getElementById('quoteNo').value || 'Quotation';
-        const custName = document.getElementById('custName').value || 'Customer';
-        link.download = `ใบเสนอราคา_${quoteNo}_${custName}.png`;
-        link.href = canvas.toDataURL('image/png', 1.0);
-        link.click();
+      const quoteNo = document.getElementById('quoteNo').value || 'Quotation';
+      const custName = document.getElementById('custName').value || 'Customer';
 
+      const opt = {
+        margin: [5, 5, 5, 5],
+        filename: `ใบเสนอราคา_${quoteNo}_${custName}.pdf`,
+        image: { type: 'jpeg', quality: 0.98 },
+        html2canvas: { scale: 2, useCORS: true, logging: false },
+        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+      };
+
+      html2pdf().set(opt).from(targetElement).save().then(() => {
         btn.innerHTML = originalContent;
         btn.disabled = false;
       }).catch(err => {
-        console.error('Export PNG failed:', err);
-        alert('เกิดข้อผิดพลาดในการบันทึกไฟล์ภาพ กรุณาลองใหม่อีกครั้ง');
+        console.error('Export PDF failed:', err);
+        alert('เกิดข้อผิดพลาดในการบันทึกไฟล์ PDF กรุณาลองใหม่อีกครั้งค่ะ');
         btn.innerHTML = originalContent;
         btn.disabled = false;
       });
