@@ -428,9 +428,25 @@
                     <label>ราคารถยนต์ (บาท)</label>
                     <input type="number" id="carPrice" value="1099000" oninput="updateQuotation()">
                 </div>
+                <div class="full-width">
+                    <label>รูปแบบการซื้อ</label>
+                    <select id="purchaseType" onchange="togglePurchaseMode(); updateQuotation()">
+                        <option value="finance" selected>จัดไฟแนนซ์</option>
+                        <option value="cash">ซื้อเงินสด</option>
+                    </select>
+                </div>
+                <div class="full-width" id="cashPurchaseFields" style="display:none;">
+                    <label>รายละเอียดการซื้อเงินสด</label>
+                    <input type="text" id="cashNote" placeholder="เช่น ชำระเต็มจำนวน / โอนเงิน / เช็ค" oninput="updateQuotation()">
+                </div>
+                <div class="full-width" id="cashDiscountField" style="display:none;">
+                    <label>ส่วนลดเงินสด (บาท)</label>
+                    <input type="number" id="cashDiscount" value="0" min="0" oninput="updateQuotation()">
+                </div>
             </div>
 
             <!-- เงื่อนไขไฟแนนซ์ -->
+            <div id="financeSection">
             <div class="form-group-title"><i class="fa-solid fa-calculator"></i> เงื่อนไขไฟแนนซ์</div>
             <div class="form-grid">
                 <div class="full-width">
@@ -455,6 +471,32 @@
                         <option value="72" selected>72 งวด (6 ปี)</option>
                         <option value="84">84 งวด (7 ปี)</option>
                     </select>
+                </div>
+            </div>
+            </div>
+
+            <!-- สรุปค่าใช้จ่าย -->
+            <div class="form-group-title"><i class="fa-solid fa-receipt"></i> สรุปค่าใช้จ่าย</div>
+            <div class="form-grid">
+                <div>
+                    <label>ค่าจดทะเบียน (บาท)</label>
+                    <input type="number" id="registrationFee" value="0" min="0" oninput="updateQuotation()">
+                </div>
+                <div>
+                    <label>ค่าประกัน / พ.ร.บ. (บาท)</label>
+                    <input type="number" id="insuranceFee" value="0" min="0" oninput="updateQuotation()">
+                </div>
+                <div>
+                    <label>ค่าดำเนินการ (บาท)</label>
+                    <input type="number" id="processingFee" value="0" min="0" oninput="updateQuotation()">
+                </div>
+                <div>
+                    <label>ค่าใช้จ่ายอื่น ๆ (บาท)</label>
+                    <input type="number" id="otherFee" value="0" min="0" oninput="updateQuotation()">
+                </div>
+                <div class="full-width">
+                    <label>รายละเอียดค่าใช้จ่ายอื่น ๆ</label>
+                    <input type="text" id="otherFeeNote" placeholder="เช่น ค่าขนส่ง / อุปกรณ์เพิ่มเติม" oninput="updateQuotation()">
                 </div>
             </div>
 
@@ -519,6 +561,14 @@
                         <span>รุ่นย่อย / GRADE</span>
                         <strong id="pCarGrade">-</strong>
                     </div>
+                    <div class="q-info-item">
+                        <span>รูปแบบการซื้อ / PURCHASE TYPE</span>
+                        <strong id="pPurchaseType">จัดไฟแนนซ์</strong>
+                    </div>
+                    <div class="q-info-item" id="pCashNoteWrap" style="display:none;">
+                        <span>รายละเอียดการซื้อเงินสด / CASH DETAIL</span>
+                        <strong id="pCashNote">-</strong>
+                    </div>
                 </div>
 
                 <!-- Table Financial Summary -->
@@ -531,27 +581,68 @@
                     </thead>
                     <tbody>
                         <tr>
-                            <td>ราคารถยนต์สุทธิ</td>
+                            <td>ราคารถยนต์</td>
                             <td class="text-right" id="pCarPrice">0 บาท</td>
                         </tr>
-                        <tr>
+                        <tr id="pCashDiscountRow" style="display:none;">
+                            <td>ส่วนลดเงินสด</td>
+                            <td class="text-right" id="pCashDiscount">0 บาท</td>
+                        </tr>
+                        <tr id="pCashNetRow" class="highlight-row" style="display:none;">
+                            <td>ยอดชำระสุทธิ (เงินสด)</td>
+                            <td class="text-right" id="pCashNet">0 บาท</td>
+                        </tr>
+                        <tr class="finance-only">
                             <td>เงินดาวน์ (<span id="pDownPercent">0%</span>)</td>
                             <td class="text-right" id="pDownAmount">0 บาท</td>
                         </tr>
-                        <tr>
+                        <tr class="finance-only">
                             <td>ยอดจัดไฟแนนซ์</td>
                             <td class="text-right" id="pLoanAmount">0 บาท</td>
                         </tr>
-                        <tr>
+                        <tr class="finance-only">
                             <td>อัตราดอกเบี้ย / ระยะเวลาผ่อน</td>
                             <td class="text-right"><span id="pInterest">0</span>% (<span id="pTerm">0</span> งวด)</td>
                         </tr>
-                        <tr class="highlight-row">
+                        <tr class="highlight-row finance-only">
                             <td>ค่างวดประมาณการต่อเดือน</td>
                             <td class="text-right" id="pMonthlyPayment">0 บาท/เดือน</td>
                         </tr>
                     </tbody>
                 </table>
+
+                <!-- Expense Summary -->
+                <div class="q-addons" id="expenseSummary">
+                    <h4>สรุปค่าใช้จ่าย (EXPENSE SUMMARY)</h4>
+                    <table class="q-table">
+                        <tbody>
+                            <tr>
+                                <td>ค่าจดทะเบียน</td>
+                                <td class="text-right" id="pRegistrationFee">0 บาท</td>
+                            </tr>
+                            <tr>
+                                <td>ค่าประกัน / พ.ร.บ.</td>
+                                <td class="text-right" id="pInsuranceFee">0 บาท</td>
+                            </tr>
+                            <tr>
+                                <td>ค่าดำเนินการ</td>
+                                <td class="text-right" id="pProcessingFee">0 บาท</td>
+                            </tr>
+                            <tr id="pOtherFeeRow">
+                                <td>ค่าใช้จ่ายอื่น ๆ <span id="pOtherFeeNoteText"></span></td>
+                                <td class="text-right" id="pOtherFee">0 บาท</td>
+                            </tr>
+                            <tr class="highlight-row">
+                                <td>รวมค่าใช้จ่ายเพิ่มเติม</td>
+                                <td class="text-right" id="pTotalExpenses">0 บาท</td>
+                            </tr>
+                            <tr class="highlight-row">
+                                <td id="pGrandTotalLabel">ยอดรวมทั้งหมด</td>
+                                <td class="text-right" id="pGrandTotal">0 บาท</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
 
                 <!-- Addons List -->
                 <div class="q-addons">
@@ -586,13 +677,36 @@
         });
 
         // Main Calculation and Update Function
+        function togglePurchaseMode() {
+            const type = document.getElementById('purchaseType').value;
+            const isCash = type === 'cash';
+
+            document.getElementById('financeSection').style.display = isCash ? 'none' : 'block';
+            document.getElementById('cashPurchaseFields').style.display = isCash ? 'block' : 'none';
+            document.getElementById('cashDiscountField').style.display = isCash ? 'block' : 'none';
+
+            document.querySelectorAll('.finance-only').forEach(el => {
+                el.style.display = isCash ? 'none' : '';
+            });
+
+            document.getElementById('pCashDiscountRow').style.display = isCash ? '' : 'none';
+            document.getElementById('pCashNetRow').style.display = isCash ? '' : 'none';
+            document.getElementById('pCashNoteWrap').style.display =
+                isCash && document.getElementById('cashNote').value.trim() ? '' : 'none';
+        }
+
         function updateQuotation() {
             const name = document.getElementById('custName').value || '-';
             const phone = document.getElementById('custPhone').value || '-';
             const model = document.getElementById('carModel').value || '-';
             const grade = document.getElementById('carGrade').value || '-';
-            
+
             const price = parseFloat(document.getElementById('carPrice').value) || 0;
+            const purchaseType = document.getElementById('purchaseType').value;
+            const isCash = purchaseType === 'cash';
+            const cashNote = document.getElementById('cashNote').value || '';
+            const cashDiscount = parseFloat(document.getElementById('cashDiscount').value) || 0;
+
             const downVal = parseFloat(document.getElementById('downPaymentValue').value) || 0;
             const downType = document.getElementById('downPaymentType').value;
             const interestRate = parseFloat(document.getElementById('interestRate').value) || 0;
@@ -614,12 +728,26 @@
             const totalInterest = loanAmount * (interestRate / 100) * years;
             const totalLoanWithInterest = loanAmount + totalInterest;
             const monthlyPayment = termMonths > 0 ? (totalLoanWithInterest / termMonths) : 0;
+            const cashNet = Math.max(0, price - cashDiscount);
 
-            // Render Preview Text
+            // สรุปค่าใช้จ่ายเพิ่มเติม
+            const registrationFee = parseFloat(document.getElementById('registrationFee').value) || 0;
+            const insuranceFee = parseFloat(document.getElementById('insuranceFee').value) || 0;
+            const processingFee = parseFloat(document.getElementById('processingFee').value) || 0;
+            const otherFee = parseFloat(document.getElementById('otherFee').value) || 0;
+            const otherFeeNote = document.getElementById('otherFeeNote').value.trim();
+            const totalExpenses = registrationFee + insuranceFee + processingFee + otherFee;
+
+            // ยอดรวมทั้งหมด: เงินสด = ราคาหลังส่วนลด + ค่าใช้จ่ายเพิ่มเติม
+            // ไฟแนนซ์ = เงินดาวน์ + ค่าใช้จ่ายเพิ่มเติม
+            const baseTotal = isCash ? cashNet : downAmount;
+            const grandTotal = baseTotal + totalExpenses;
+
             document.getElementById('pCustName').innerText = name;
             document.getElementById('pCustPhone').innerText = phone;
             document.getElementById('pCarModel').innerText = model;
             document.getElementById('pCarGrade').innerText = grade;
+            document.getElementById('pPurchaseType').innerText = isCash ? 'ซื้อเงินสด' : 'จัดไฟแนนซ์';
 
             document.getElementById('pCarPrice').innerText = formatCurrency(price);
             document.getElementById('pDownPercent').innerText = downPercent.toFixed(1) + '%';
@@ -628,8 +756,22 @@
             document.getElementById('pInterest').innerText = interestRate.toFixed(2);
             document.getElementById('pTerm').innerText = termMonths;
             document.getElementById('pMonthlyPayment').innerText = formatCurrency(monthlyPayment) + ' บาท';
+            document.getElementById('pCashDiscount').innerText = formatCurrency(cashDiscount);
+            document.getElementById('pCashNet').innerText = formatCurrency(cashNet);
+            document.getElementById('pCashNote').innerText = cashNote || '-';
 
-            // Render Addons
+            document.getElementById('pRegistrationFee').innerText = formatCurrency(registrationFee);
+            document.getElementById('pInsuranceFee').innerText = formatCurrency(insuranceFee);
+            document.getElementById('pProcessingFee').innerText = formatCurrency(processingFee);
+            document.getElementById('pOtherFee').innerText = formatCurrency(otherFee);
+            document.getElementById('pOtherFeeNoteText').innerText = otherFeeNote ? `(${otherFeeNote})` : '';
+            document.getElementById('pTotalExpenses').innerText = formatCurrency(totalExpenses);
+            document.getElementById('pGrandTotal').innerText = formatCurrency(grandTotal);
+            document.getElementById('pGrandTotalLabel').innerText =
+                isCash ? 'ยอดชำระสุทธิรวมค่าใช้จ่าย' : 'ยอดเงินดาวน์รวมค่าใช้จ่าย';
+
+            togglePurchaseMode();
+
             const addonInputs = document.querySelectorAll('.addon-item');
             const previewAddonsList = document.getElementById('pAddonsList');
             previewAddonsList.innerHTML = '';
