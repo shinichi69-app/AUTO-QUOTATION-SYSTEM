@@ -494,6 +494,10 @@
                     <label>ค่าใช้จ่ายอื่น ๆ (บาท)</label>
                     <input type="number" id="otherFee" value="0" min="0" oninput="updateQuotation()">
                 </div>
+                <div>
+                    <label>เงินจอง (หักออกจากยอดชำระ) (บาท)</label>
+                    <input type="number" id="bookingDeposit" value="0" min="0" oninput="updateQuotation()">
+                </div>
                 <div class="full-width">
                     <label>รายละเอียดค่าใช้จ่ายอื่น ๆ</label>
                     <input type="text" id="otherFeeNote" placeholder="เช่น ค่าขนส่ง / อุปกรณ์เพิ่มเติม" oninput="updateQuotation()">
@@ -636,6 +640,10 @@
                                 <td>รวมค่าใช้จ่ายเพิ่มเติม</td>
                                 <td class="text-right" id="pTotalExpenses">0 บาท</td>
                             </tr>
+                            <tr>
+                                <td>เงินจอง (หักออก)</td>
+                                <td class="text-right" id="pBookingDeposit">0 บาท</td>
+                            </tr>
                             <tr class="highlight-row">
                                 <td id="pGrandTotalLabel">ยอดรวมทั้งหมด</td>
                                 <td class="text-right" id="pGrandTotal">0 บาท</td>
@@ -735,13 +743,19 @@
             const insuranceFee = parseFloat(document.getElementById('insuranceFee').value) || 0;
             const processingFee = parseFloat(document.getElementById('processingFee').value) || 0;
             const otherFee = parseFloat(document.getElementById('otherFee').value) || 0;
+            const bookingDeposit = parseFloat(document.getElementById('bookingDeposit').value) || 0;
             const otherFeeNote = document.getElementById('otherFeeNote').value.trim();
             const totalExpenses = registrationFee + insuranceFee + processingFee + otherFee;
 
-            // ยอดรวมทั้งหมด: เงินสด = ราคาหลังส่วนลด + ค่าใช้จ่ายเพิ่มเติม
+            // ยอดรวมทั้งหมดก่อนหักเงินจอง
+            // เงินสด = ราคาหลังส่วนลด + ค่าใช้จ่ายเพิ่มเติม
             // ไฟแนนซ์ = เงินดาวน์ + ค่าใช้จ่ายเพิ่มเติม
             const baseTotal = isCash ? cashNet : downAmount;
-            const grandTotal = baseTotal + totalExpenses;
+            const grandTotalBeforeDeposit = baseTotal + totalExpenses;
+
+            // เงินจองต้องไม่ทำให้ยอดสุทธิติดลบ
+            const appliedBookingDeposit = Math.min(Math.max(0, bookingDeposit), grandTotalBeforeDeposit);
+            const grandTotal = Math.max(0, grandTotalBeforeDeposit - appliedBookingDeposit);
 
             document.getElementById('pCustName').innerText = name;
             document.getElementById('pCustPhone').innerText = phone;
@@ -766,9 +780,10 @@
             document.getElementById('pOtherFee').innerText = formatCurrency(otherFee);
             document.getElementById('pOtherFeeNoteText').innerText = otherFeeNote ? `(${otherFeeNote})` : '';
             document.getElementById('pTotalExpenses').innerText = formatCurrency(totalExpenses);
+            document.getElementById('pBookingDeposit').innerText = formatCurrency(appliedBookingDeposit);
             document.getElementById('pGrandTotal').innerText = formatCurrency(grandTotal);
             document.getElementById('pGrandTotalLabel').innerText =
-                isCash ? 'ยอดชำระสุทธิรวมค่าใช้จ่าย' : 'ยอดเงินดาวน์รวมค่าใช้จ่าย';
+                isCash ? 'ยอดชำระสุทธิหลังหักเงินจอง' : 'ยอดเงินดาวน์สุทธิหลังหักเงินจอง';
 
             togglePurchaseMode();
 
